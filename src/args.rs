@@ -29,7 +29,7 @@ pub struct Args {
     #[arg(short, long)]
     pub debug: bool,
 
-    #[arg(short, long, default_value = "4000")]
+    #[arg(long, default_value = "4000")]
     pub width: u32,
 
     #[arg(long, default_value = "4000")]
