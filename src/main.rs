@@ -17,14 +17,6 @@ use ghostweb::{ghostweb, load_image};
 use pbr::ProgressBar;
 use std::convert::TryInto;
 
-macro_rules! validate {
-    ($e:expr, $msg:expr) => {
-        if !$e {
-            return Err(Error::BadRequest($msg.into()));
-        }
-    };
-}
-
 fn main() {
     let args = Args::parse();
     let radius = if args.radius > 0. {
