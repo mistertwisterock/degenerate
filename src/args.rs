@@ -8,6 +8,16 @@ pub enum Method {
     Line,
 }
 
+#[derive(Debug, Clone)]
+pub enum ColorMode {
+    Mono,      // White on black (default)
+    Rainbow,   // HSV rainbow based on iteration
+    Frequency, // Color based on FFT frequency
+    Amplitude, // Color based on sample amplitude
+    Position,  // Color based on X/Y position
+    Noise,     // Color based on noise value
+}
+
 // to select a method by string for structopt
 fn parse_method(method: &str) -> Result<Method, String> {
     match method {
@@ -16,6 +26,18 @@ fn parse_method(method: &str) -> Result<Method, String> {
         "dot" => Ok(Method::Dot),
         "line" => Ok(Method::Line),
         _ => Err(format!("Could not parse method {}", method)),
+    }
+}
+
+fn parse_color_mode(mode: &str) -> Result<ColorMode, String> {
+    match mode {
+        "mono" => Ok(ColorMode::Mono),
+        "rainbow" => Ok(ColorMode::Rainbow),
+        "frequency" => Ok(ColorMode::Frequency),
+        "amplitude" => Ok(ColorMode::Amplitude),
+        "position" => Ok(ColorMode::Position),
+        "noise" => Ok(ColorMode::Noise),
+        _ => Err(format!("Could not parse color mode {}", mode)),
     }
 }
 
@@ -64,6 +86,15 @@ pub struct Args {
 
     #[arg(short = 'M', long, value_parser = parse_method, default_value = "dot")]
     pub method: Method,
+
+    #[arg(short = 'c', long, value_parser = parse_color_mode, default_value = "mono")]
+    pub color_mode: ColorMode,
+
+    #[arg(long, default_value = "1.0")]
+    pub saturation: f64,
+
+    #[arg(long, default_value = "1.0")]
+    pub brightness: f64,
 
     #[arg(long, default_value = "1")]
     pub scale_image: f64,

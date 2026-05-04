@@ -1,4 +1,4 @@
-use super::args::{Args, Method};
+use super::args::{Args, ColorMode, Method};
 
 #[derive(Debug)]
 pub struct RenderConfig {
@@ -18,6 +18,9 @@ pub struct RenderConfig {
     pub method: Method,
     pub size: f64,
     pub combine_dots: bool,
+    pub color_mode: ColorMode,
+    pub saturation: f64,
+    pub brightness: f64,
 }
 
 impl RenderConfig {
@@ -42,6 +45,9 @@ impl RenderConfig {
             method,
             size: args.size,
             combine_dots: args.combine_dots,
+            color_mode: args.color_mode.clone(),
+            saturation: args.saturation,
+            brightness: args.brightness,
         }
     }
 }

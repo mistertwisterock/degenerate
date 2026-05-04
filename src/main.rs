@@ -9,6 +9,7 @@ mod ghostweb;
 mod render;
 
 use args::Args;
+use args::ColorMode;
 use args::Method;
 use cairo::{Context, Format, ImageSurface};
 use clap::Parser;
@@ -118,6 +119,9 @@ fn render_frame(conf: render::RenderConfig, debug: bool) -> ImageSurface {
         debug,
         &conf.method,
         conf.combine_dots,
+        &conf.color_mode,
+        conf.saturation,
+        conf.brightness,
     );
     surface
 }
@@ -173,8 +177,27 @@ fn render_displacement_frame(
         debug,
         &conf.method,
         conf.combine_dots,
+        &conf.color_mode,
+        conf.saturation,
+        conf.brightness,
     );
     surface
+}
+
+fn hsv_to_rgb(h: f64, s: f64, v: f64) -> (f64, f64, f64) {
+    let c = v * s;
+    let h_prime = (h % 360.0) / 60.0;
+    let x = c * (1.0 - ((h_prime % 2.0) - 1.0).abs());
+    let (r1, g1, b1) = match h_prime as i32 {
+        0 => (c, x, 0.0),
+        1 => (x, c, 0.0),
+        2 => (0.0, c, x),
+        3 => (0.0, x, c),
+        4 => (x, 0.0, c),
+        _ => (c, 0.0, x),
+    };
+    let m = v - c;
+    (r1 + m, g1 + m, b1 + m)
 }
 
 fn draw_frame(
@@ -186,6 +209,9 @@ fn draw_frame(
     debug: bool,
     method: &Method,
     combine_dots: bool,
+    color_mode: &ColorMode,
+    saturation: f64,
+    brightness: f64,
 ) {
     let cx: f64 = width as f64 / 2.;
     let cy: f64 = height as f64 / 2.;
@@ -194,7 +220,8 @@ fn draw_frame(
     context.set_source_rgb(0.0, 0.0, 0.0);
     context.paint().unwrap();
 
-    for x in xs {
+    let total = xs.len() as f64;
+    for (idx, x) in xs.iter().enumerate() {
         if debug {
             println!("{:?}", x);
         }
@@ -206,8 +233,35 @@ fn draw_frame(
         let crx3 = cx + cx * x.p1.x + x.p2.x * x.radius;
         let cry3 = cy + cy * x.p1.y + x.p2.y * x.radius;
 
+        // Calculate color based on mode
+        let (r, g, b) = match color_mode {
+            ColorMode::Mono => (1.0, 1.0, 1.0),
+            ColorMode::Rainbow => {
+                let hue = (idx as f64 / total) * 360.0;
+                hsv_to_rgb(hue, saturation, brightness)
+            }
+            ColorMode::Frequency => {
+                let hue = (x.p1.z.abs() * 360.0) % 360.0;
+                hsv_to_rgb(hue, saturation, brightness)
+            }
+            ColorMode::Amplitude => {
+                let hue = ((x.p1.x.abs() + x.p1.y.abs()) * 180.0) % 360.0;
+                hsv_to_rgb(hue, saturation, brightness)
+            }
+            ColorMode::Position => {
+                let norm_x = (crx1 / width as f64).abs();
+                let norm_y = (cry1 / height as f64).abs();
+                let hue = ((norm_x + norm_y) * 180.0) % 360.0;
+                hsv_to_rgb(hue, saturation, brightness)
+            }
+            ColorMode::Noise => {
+                let hue = ((x.radius / 1000.0) * 360.0) % 360.0;
+                hsv_to_rgb(hue, saturation, brightness)
+            }
+        };
+
         context.set_line_width(0.1);
-        context.set_source_rgba(1.0, 1.0, 1.0, 1.0);
+        context.set_source_rgba(r, g, b, 1.0);
         context.move_to(crx1, cry1);
 
         match method {
@@ -221,7 +275,7 @@ fn draw_frame(
                 cy + x.p2.z * x.radius,
             ),
             Method::Dot => {
-                context.set_source_rgba(1.0, 1.0, 1.0, 1.0);
+                context.set_source_rgba(r, g, b, 1.0);
                 if combine_dots {
                     context.rectangle(crx3, cry3, 0.5, 0.5);
                 } else {
@@ -230,7 +284,7 @@ fn draw_frame(
                     context.rectangle(crx1, cry1, size_1, size_1);
                     context.stroke().unwrap();
                     context.fill().unwrap();
-                    context.set_source_rgba(1.0, 1.0, 1.0, 1.0);
+                    context.set_source_rgba(r, g, b, 1.0);
                     context.rectangle(crx2, cry2, size_2, size_2);
                 }
             }

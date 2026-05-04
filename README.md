@@ -47,6 +47,11 @@ cargo run --release -- -M curve -i 1000     # Bezier curves
 cargo run --release -- -M arc -i 1000       # Circular arcs
 cargo run --release -- -M dot -s 2.0 -i 1000  # Dots with size 2.0
 
+# Psychedelic colorful variations
+cargo run --release -- --width 1200 --height 1200 -i 25000 -M curve --f1 15 --f2 9 -r 500 -c rainbow --saturation 0.9 --brightness 0.95
+cargo run --release -- --width 1000 --height 1000 -i 30000 -M line --f1 10 --f2 13 -r 400 -c position
+cargo run --release -- -i 40000 -M dot -s 1.5 --f1 14 --f2 3 -c frequency --saturation 0.85
+
 # Set custom output location
 cargo run --release -- -o ./output --filename artwork_ -i 3000
 ```
@@ -104,6 +109,22 @@ cargo run --release -- audio.wav --image logo.png -f 200
 | `-g, --grow <GROW>` | Growth parameter (deprecated) | `0` |
 | `-t <T>` | Time scale multiplier | `1.0` |
 | `-m <M>` | Modulation parameter for exponential transfer | `0.2` |
+
+### Color Options
+
+| Flag | Description | Default |
+|------|-------------|--------|
+| `-c, --color-mode <MODE>` | Color generation mode (see below) | `mono` |
+| `--saturation <SATURATION>` | HSV saturation (0.0-1.0) | `1.0` |
+| `--brightness <BRIGHTNESS>` | HSV brightness/value (0.0-1.0) | `1.0` |
+
+**Color Modes:**
+- `mono` - White on black (classic monochrome)
+- `rainbow` - Full HSV spectrum based on iteration index (psychedelic gradients)
+- `frequency` - Color mapped from point z-coordinate (FFT-reactive)
+- `amplitude` - Color based on point position magnitude
+- `position` - Color mapped from canvas X/Y coordinates (spatial gradients)
+- `noise` - Color based on radius/noise values
 
 ### Equation Selection
 
@@ -265,18 +286,29 @@ cargo run --release -- audio.wav -f 300 --fps 30 -o ./animation
 
 ### High-Resolution Artwork
 ```bash
+# Monochrome detailed piece
 cargo run --release -- --width 8000 --height 8000 -i 50000 --f1 10 --f2 6 -M curve -r 3000
-# → /tmp/frame_000000.png (detailed generative art piece)
+# → /tmp/frame_000000.png
+
+# Psychedelic rainbow explosion
+cargo run --release -- --width 2400 --height 2400 -i 30000 --f1 15 --f2 9 -M curve -r 1000 -c rainbow --saturation 0.92 --brightness 0.95 -o ./output
+# → ./output/frame_000000.png (vibrant colorful artwork)
 ```
 
 ## Tips
 
-- **Iterations**: More iterations = denser patterns (try 10000+ for detailed work)
+- **Iterations**: More iterations = denser patterns (try 10000+ for detailed work, 25000+ for psychedelic)
 - **Equations**: Experiment with different f1/f2 combinations (each has unique character)
+  - Try: 15 (popcorn), 10 (totenschiff), 13 (arctangent), 14 (pure noise) for wild results
 - **Audio**: Use music with strong beats for dramatic visual changes
-- **Methods**: `curve` creates flowing organic forms, `line` creates geometric webs
+- **Methods**: `curve` creates flowing organic forms, `line` creates geometric webs, `dot` for particle effects
 - **Radius**: Larger radius spreads pattern across more of the canvas
 - **Time scale (-t)**: Values > 1 speed up animation, < 1 slow it down
+- **Color Modes**:
+  - `rainbow` + `curve` = psychedelic flowing gradients
+  - `position` + `line` = spatial color explosions
+  - `frequency` + high iterations = detailed multicolor fractals
+  - Adjust saturation/brightness to control intensity (0.8-0.95 for vivid, 0.5-0.7 for pastel)
 
 ## License
 
